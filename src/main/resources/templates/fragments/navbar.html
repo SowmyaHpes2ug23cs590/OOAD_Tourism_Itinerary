@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8" th:fragment="sidebar-css">
+    <style>
+        /* ===== SHARED NAV + SIDEBAR ===== */
+        :root {
+            --bg-color: #0A0F1C;
+            --card-bg: rgba(26, 30, 45, 0.4);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3B82F6;
+            --text: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(12px);
+        }
+    </style>
+</head>
+
+<body>
+<!-- =============================================
+     SHARED NAVBAR  (th:replace or th:insert)
+     Usage in any page:
+       <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+     ============================================= -->
+<nav th:fragment="navbar" class="navbar">
+    <div class="nav-left">
+        <button class="hamburger" id="sidebarToggle" aria-label="Open menu">&#9776;</button>
+        <a href="/itineraries" class="brand">Tourism Planner</a>
+    </div>
+    <div class="nav-right">
+        <a href="/spending" class="nav-link">Spending</a>
+        <a href="/profile" class="nav-link">Profile</a>
+        <form action="/logout" method="post" style="display:inline;">
+            <button type="submit" class="btn-logout">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<!-- ============================================================
+     SIDEBAR OVERLAY + DRAWER
+     Include just below navbar in every page body.
+     Usage: <div th:replace="~{fragments/navbar :: sidebar}"></div>
+     ============================================================ -->
+<div th:fragment="sidebar">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <aside class="sidebar-drawer" id="sidebarDrawer">
+        <div class="sidebar-header">
+            <span class="sidebar-brand">Tourism Planner</span>
+            <button class="sidebar-close" onclick="closeSidebar()">&#x2715;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/itineraries" class="sidebar-link">
+                <span class="sidebar-icon">&#128214;</span> My Itineraries
+            </a>
+            <a href="/spending" class="sidebar-link">
+                <span class="sidebar-icon">&#128200;</span> Spending Report
+            </a>
+            <a href="/profile" class="sidebar-link">
+                <span class="sidebar-icon">&#128100;</span> My Profile
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <form action="/logout" method="post">
+                <button type="submit" class="sidebar-logout">&#128275; Logout</button>
+            </form>
+        </div>
+    </aside>
+</div>
+
+<!-- =============================================
+     SHARED STYLES FRAGMENT
+     Usage: <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+     ============================================= -->
+<style th:fragment="shared-styles">
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+        --bg-color: #0A0F1C;
+        --card-bg: rgba(26, 30, 45, 0.4);
+        --card-bg-hover: rgba(35, 40, 60, 0.6);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --primary: #3B82F6;
+        --primary-hover: #2563EB;
+        --primary-dim: rgba(59, 130, 246, 0.15);
+        --text: #F3F4F6;
+        --text-muted: #9CA3AF;
+        --input-bg: rgba(15, 23, 42, 0.6);
+        --border: rgba(255, 255, 255, 0.1);
+        --success: #10B981;
+        --success-dim: rgba(16, 185, 129, 0.15);
+        --danger: #EF4444;
+        --danger-dim: rgba(239, 68, 68, 0.15);
+        --glass-blur: blur(16px);
+    }
+    body { 
+        background-color: var(--bg-color); 
+        background-image: radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 30%),
+                          radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 30%);
+        background-attachment: fixed;
+        color: var(--text); 
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        margin: 0; 
+        line-height: 1.5;
+    }
+
+    /* Navbar */
+    .navbar {
+        background: var(--card-bg); padding: 14px 28px;
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 1px solid var(--card-border); position: sticky; top: 0; z-index: 100;
+        backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .brand { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, var(--primary), #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; transition: opacity 0.2s; letter-spacing: -0.5px; }
+    .brand:hover { opacity: 0.8; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500; transition: color 0.3s ease; }
+    .nav-link:hover { color: var(--text); }
+    .btn-logout { background: var(--danger-dim); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 7px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: all 0.3s ease; }
+    .btn-logout:hover { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transform: translateY(-1px); }
+
+    /* Hamburger */
+    .hamburger { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text); font-size: 20px; cursor: pointer; padding: 6px 10px; border-radius: 8px; line-height: 1; transition: all 0.2s ease; backdrop-filter: blur(4px); }
+    .hamburger:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.05); }
+
+    /* Sidebar */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.3s ease; }
+    .sidebar-overlay.open { display: block; opacity: 1; }
+    .sidebar-drawer {
+        position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+        background: rgba(15, 17, 26, 0.85); border-right: 1px solid var(--card-border);
+        backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+        z-index: 300; display: flex; flex-direction: column;
+        transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+    }
+    .sidebar-drawer.open { left: 0; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 20px; border-bottom: 1px solid var(--card-border); }
+    .sidebar-brand { font-weight: 700; font-size: 20px; background: linear-gradient(135deg, var(--primary), #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar-close { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: var(--text-muted); font-size: 14px; cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: all 0.2s ease; }
+    .sidebar-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .sidebar-nav { flex: 1; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-link { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 10px; color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500; transition: all 0.3s ease; border: 1px solid transparent; }
+    .sidebar-link:hover { background: var(--card-bg-hover); color: var(--text); border-color: var(--card-border); transform: translateX(4px); }
+    .sidebar-link.active { background: linear-gradient(90deg, var(--primary-dim), transparent); color: var(--primary); border-left: 2px solid var(--primary); border-radius: 0 10px 10px 0; }
+    .sidebar-icon { font-size: 18px; width: 24px; text-align: center; }
+    .sidebar-footer { padding: 20px 16px; border-top: 1px solid var(--card-border); }
+    .sidebar-logout { width: 100%; padding: 14px; background: var(--danger-dim); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 600; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .sidebar-logout:hover { background: var(--danger); color: #fff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+</style>
+
+<script th:fragment="sidebar-script">
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarDrawer = document.getElementById('sidebarDrawer');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function openSidebar() {
+        sidebarDrawer.classList.add('open');
+        sidebarOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+        sidebarDrawer.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', openSidebar);
+    }
+
+    // Highlight current sidebar link
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        if (link.getAttribute('href') === window.location.pathname) {
+            link.classList.add('active');
+        }
+    });
+</script>
+</body>
+</html>
