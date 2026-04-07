@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Itineraries - Tourism Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+    <style>
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-primary { background: var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; border: none; cursor: pointer; font-family: inherit; font-size: 14px; transition: background 0.3s; display: inline-block; }
+        .btn-primary:hover { background: #3b76b3; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px; transition: transform 0.3s, box-shadow 0.3s; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+        .card-dates { font-size: 14px; color: var(--text-muted); margin-bottom: 14px; }
+        .badge { display: inline-block; padding: 6px 12px; background: rgba(74,144,217,0.1); color: var(--primary); border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid rgba(74,144,217,0.2); }
+        .card-footer { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .view-link { color: var(--primary); font-size: 14px; font-weight: 500; }
+        .btn-delete { background: transparent; border: 1px solid #3a1e1e; color: #e57373; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+        .btn-delete:hover { background: #3a1e1e; }
+        .empty-state { color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 50px; border: 1px dashed var(--border); border-radius: 12px; }
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 400; }
+        .modal { background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 400px; text-align: center; }
+        .modal h3 { margin-top: 0; }
+        .modal-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
+        .btn-danger { background: #e74c3c; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+
+    <div class="container">
+        <div class="header">
+            <h2>My Itineraries</h2>
+            <a th:href="@{/itineraries/new}" class="btn-primary">+ Create New</a>
+        </div>
+
+        <div class="grid">
+            <a th:href="@{'/itineraries/' + ${it.id}}" class="card" th:each="it : ${itineraries}">
+                <h3 class="card-title" th:text="${it.title}">Title</h3>
+                <div class="card-dates" th:text="${it.startDate + ' → ' + it.endDate}">Dates</div>
+                <div class="badge" th:text="${'Budget: $' + (it.totalBudget != null ? #numbers.formatDecimal(it.totalBudget, 1, 'COMMA', 2, 'POINT') : '0.00')}">$0.00</div>
+                <div class="card-footer">
+                    <span class="view-link">View Details →</span>
+                    <button type="button" class="btn-delete"
+                            onclick="event.preventDefault(); showDeleteModal(this.getAttribute('data-id'))"
+                            th:attr="data-id=${it.id}">Delete</button>
+                </div>
+            </a>
+            <div th:if="${#lists.isEmpty(itineraries)}" class="empty-state">
+                You haven't created any itineraries yet.
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3>Delete Itinerary</h3>
+            <p style="color:var(--text-muted);">This will permanently delete all linked day plans, activities, and destinations. Are you sure?</p>
+            <form id="deleteForm" method="post" action="">
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="hideDeleteModal()">Cancel</button>
+                    <button type="submit" class="btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showDeleteModal(id) {
+            document.getElementById('deleteForm').action = '/itineraries/' + id + '/delete';
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        function hideDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+    </script>
+    <script th:replace="~{fragments/navbar :: sidebar-script}"></script>
+</body>
+</html>
