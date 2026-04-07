@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Destinations - Tourism Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+    <style>
+        :root {
+            --beach: #008080; --mountain: #5c7285; --city: #3b76b3; --heritage: #b38030;
+        }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .btn-primary { background: var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; display: inline-block; transition: 0.3s; }
+        .btn-primary:hover { background: #3b76b3; }
+
+        /* Search and Filter Section */
+        .controls-layer { margin-bottom: 30px; display: flex; flex-direction: column; gap: 16px; }
+        .search-bar { width: 100%; max-width: 400px; position: relative; }
+        .search-bar input { width: 100%; padding: 12px 16px 12px 40px; background: var(--input-bg, #11131a); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; box-sizing: border-box; }
+        .search-bar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2); }
+        .search-icon { position: absolute; left: 14px; top: 12px; color: var(--text-muted); font-size: 16px; pointer-events: none; }
+
+        .filter-pills { display: flex; gap: 12px; flex-wrap: wrap; }
+        .pill { background-color: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 14px; transition: all 0.3s; font-weight: 500; }
+        .pill.active { background-color: var(--primary); border-color: var(--primary); color: #fff; }
+        .pill:hover:not(.active) { background-color: #2a2e3d; color: var(--text); }
+
+        /* Grid Layout */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        
+        .card { 
+            background-color: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px;
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; opacity: 0; transition: opacity 0.3s; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+        .card:hover::before { opacity: 1; }
+        
+        /* Type specific styles */
+        .card[data-type="BEACH"]::before { background-color: var(--beach); }
+        .card[data-type="MOUNTAIN"]::before { background-color: var(--mountain); }
+        .card[data-type="CITY"]::before { background-color: var(--city); }
+        .card[data-type="HERITAGE"]::before { background-color: var(--heritage); }
+
+        .badge-beach { background-color: rgba(0, 128, 128, 0.15); color: #40e0d0; }
+        .badge-mountain { background-color: rgba(92, 114, 133, 0.15); color: #8faec9; }
+        .badge-city { background-color: rgba(59, 118, 179, 0.15); color: #7cb3ed; }
+        .badge-heritage { background-color: rgba(179, 128, 48, 0.15); color: #f2c779; }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
+        .card-title { font-size: 18px; font-weight: 700; margin: 0; line-height: 1.3; }
+        .type-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .location-info { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .notes { font-size: 14px; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+        
+        .card-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+        .remove-link { color: #e74c3c; font-size: 13px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+        .remove-link:hover { text-decoration: underline; color: #ff6b6b; }
+        
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px; display: none; }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h2>Destinations</h2>
+            <a th:href="@{/destinations/add(itineraryId=${itineraryId})}" class="btn-primary">+ Add Destination</a>
+        </div>
+
+        <div class="controls-layer">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search by name or country...">
+            </div>
+            <div class="filter-pills" id="filterContainer">
+                <button class="pill active" data-filter="ALL">All</button>
+                <button class="pill" data-filter="BEACH">Beach</button>
+                <button class="pill" data-filter="MOUNTAIN">Mountain</button>
+                <button class="pill" data-filter="CITY">City</button>
+                <button class="pill" data-filter="HERITAGE">Heritage</button>
+            </div>
+        </div>
+
+        <div class="grid" id="destinationsGrid">
+            <div class="card dest-card" th:each="dest : ${destinations}" 
+                 th:attr="data-type=${dest.type}, data-name=${#strings.toLowerCase(dest.name)}, data-country=${#strings.toLowerCase(dest.country)}">
+                
+                <div class="card-header">
+                    <h3 class="card-title" th:text="${dest.name}">Destination Name</h3>
+                    <span class="type-badge" 
+                          th:classappend="'badge-' + ${#strings.toLowerCase(dest.type)}" 
+                          th:text="${dest.type}">TYPE</span>
+                </div>
+                
+                <div class="location-info">
+                    📍 <span th:text="${dest.city + ', ' + dest.country}">City, Country</span>
+                </div>
+                
+                <p class="notes" th:text="${dest.notes}">Notes about the destination and external api info.</p>
+                
+                <div class="card-footer">
+                    <form th:action="@{'/destinations/remove/' + ${dest.id}}" method="post" onsubmit="return confirm('Ensure you want to remove this destination from your itinerary?');">
+                        <input type="hidden" name="itineraryId" th:value="${itineraryId}">
+                        <button type="submit" class="remove-link">Remove</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="noResultsMsg" class="empty-state">
+                No destinations match your search or filter.
+            </div>
+            <div th:if="${#lists.isEmpty(destinations)}" class="empty-state" style="display: block;">
+                No destinations added yet. Click "+ Add Destination" to begin.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById('searchInput');
+            const filterContainer = document.getElementById('filterContainer');
+            const pills = filterContainer.querySelectorAll('.pill');
+            const cards = document.querySelectorAll('.dest-card');
+            const noResultsMsg = document.getElementById('noResultsMsg');
+            
+            let currentFilter = 'ALL';
+            let currentSearch = '';
+
+            function applyFilters() {
+                let visibleCount = 0;
+                
+                cards.forEach(card => {
+                    const cardType = card.getAttribute('data-type');
+                    const cardName = card.getAttribute('data-name');
+                    const cardCountry = card.getAttribute('data-country');
+                    
+                    const matchesType = (currentFilter === 'ALL' || currentFilter === cardType);
+                    const matchesSearch = currentSearch === '' || 
+                                          cardName.includes(currentSearch) || 
+                                          cardCountry.includes(currentSearch);
+                                          
+                    if (matchesType && matchesSearch) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                if (visibleCount === 0 && cards.length > 0) {
+                    noResultsMsg.style.display = 'block';
+                } else {
+                    noResultsMsg.style.display = 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase().trim();
+                applyFilters();
+            });
+
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentFilter = pill.getAttribute('data-filter');
+                    applyFilters();
+                });
+            });
+        });
+    <script th:replace="~{fragments/navbar :: sidebar-script}"></script>
+</body>
+</html>

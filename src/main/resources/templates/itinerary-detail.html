@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Itinerary Detail - Tourism Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+    <style>
+        .header-banner { padding: 40px 32px; border-bottom: 1px solid var(--border); background-color: var(--card-bg); backdrop-filter: var(--glass-blur); }
+        .header-banner h1 { margin: 0 0 10px 0; font-size: 32px; letter-spacing: -0.5px; }
+        .meta { color: var(--text-muted); font-size: 14px; display: flex; gap: 20px; }
+        
+        .layout { display: flex; max-width: 1200px; margin: 40px auto; padding: 0 20px; gap: 40px; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; flex-shrink: 0; }
+        .day-tab { display: block; padding: 16px; margin-bottom: 8px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); text-decoration: none; transition: all 0.3s ease; font-weight: 500; }
+        .day-tab:hover { background-color: var(--card-bg-hover); transform: translateX(4px); border-color: var(--primary-dim); }
+        
+        .add-day-form { margin-top: 20px; }
+        .btn-outline { background-color: transparent; border: 1px dashed var(--primary); color: var(--primary); padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; transition: all 0.3s; font-family: inherit; font-size: 14px; font-weight: 600;}
+        .btn-outline:hover { background-color: var(--primary-dim); }
+
+        /* Timeline Main Area */
+        .content { flex-grow: 1; }
+        .timeline { position: relative; padding-left: 30px; margin-top: 20px; padding-bottom: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--primary), transparent); opacity: 0.5; }
+        
+        .timeline-item { position: relative; margin-bottom: 30px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; backdrop-filter: var(--glass-blur); }
+        .timeline-item:hover { transform: translateY(-3px); border-color: var(--primary); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .timeline-item::before { content: ''; position: absolute; left: -24px; top: 24px; width: 10px; height: 10px; background-color: var(--primary); border-radius: 50%; box-shadow: 0 0 0 4px var(--bg-color), 0 0 10px var(--primary); }
+        
+        .activity-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .activity-title { margin: 0; font-size: 18px; font-weight: 600; }
+        .badges { display: flex; gap: 8px; }
+        .badge-time { background-color: var(--primary-dim); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .badge-cost { background-color: var(--success-dim); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .activity-notes { color: var(--text-muted); font-size: 14px; margin: 0; line-height: 1.6; }
+        .activity-footer { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); text-align: right; }
+        .btn-sm-danger { background-color: transparent; color: var(--danger); border: none; font-size: 13px; cursor: pointer; font-family: inherit; padding: 0; font-weight: 500; transition: color 0.2s;}
+        .btn-sm-danger:hover { color: #f87171; text-decoration: underline; }
+
+        /* Add Activity Form classes used in fragment */
+        .add-activity-card { background-color: var(--card-bg); border: 1px dashed var(--primary); border-radius: 12px; padding: 24px; margin-top: 20px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 14px; background-color: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; box-sizing: border-box; transition: all 0.3s; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #8B5CF6); color: #fff; padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px var(--primary-dim); display: inline-block; text-decoration: none; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-dim); }
+        
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px; background: rgba(255,255,255,0.02); }
+        .day-section { padding-top: 40px; scroll-margin-top: 80px;}
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    
+    <div class="header-banner">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h1 style="margin: 0;" th:text="${itinerary.title}">Trip Title</h1>
+            <div>
+                <a th:href="@{'/itineraries/' + ${itinerary.id} + '/edit'}" class="btn-outline" style="text-decoration:none; padding:8px 16px; border-radius:6px; margin-right:12px; display:inline-block; width:auto; font-size:14px; border-color: var(--text-muted); color: var(--text);">✏️ Edit Details</a>
+                <a th:href="@{'/bookings/' + ${itinerary.id}}" class="btn-primary" style="text-decoration:none; padding:8px 16px; border-radius:6px; display:inline-block; font-size:14px;">🏢 Hotel Bookings</a>
+                <a th:href="@{'/bookings/export/' + ${itinerary.id}}" class="btn-outline" style="text-decoration:none; padding:8px 16px; border-radius:6px; margin-left:12px; display:inline-block; width:auto; font-size:14px;" target="_blank">📥 Download Summary</a>
+            </div>
+        </div>
+        <div class="meta">
+            <span th:text="${itinerary.startDate + ' to ' + itinerary.endDate}">Dates</span>
+            <span th:text="${itinerary.totalBudget != null ? 'Budget: $' + #numbers.formatDecimal(itinerary.totalBudget, 1, 'COMMA', 2, 'POINT') : 'Budget: $0.00'}">Budget</span>
+            <span th:text="${itinerary.destinationSummary}">Summary</span>
+        </div>
+        
+        <div th:if="${itinerary.totalBudget != null and itinerary.getTotalSpent() > itinerary.totalBudget}" 
+             style="background: var(--danger-dim); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(4px);">
+            ⚠️ Warning: Your total estimated cost ($<span th:text="${#numbers.formatDecimal(itinerary.getTotalSpent(), 1, 'COMMA', 2, 'POINT')}"></span>) has exceeded your allocated budget of $<span th:text="${#numbers.formatDecimal(itinerary.totalBudget, 1, 'COMMA', 2, 'POINT')}"></span>!
+        </div>
+    </div>
+
+    <div class="layout">
+        <div class="sidebar">
+            <h3 style="margin-top:0;">Timeline</h3>
+            <a th:each="day : ${itinerary.dayPlans}" 
+               th:href="${'#day-' + day.dayNumber}" 
+               class="day-tab" th:text="${'Day ' + day.dayNumber}">Day 1</a>
+            
+            <form class="add-day-form" th:if="${#lists.size(itinerary.dayPlans) < itinerary.getTotalDays()}" th:action="@{'/itineraries/' + ${itinerary.id} + '/days'}" method="post">
+                <input type="hidden" name="dayNumber" th:value="${#lists.size(itinerary.dayPlans) + 1}">
+                <button type="submit" class="btn-outline">+ Add Day <span th:text="${#lists.size(itinerary.dayPlans) + 1}"></span></button>
+            </form>
+        </div>
+
+        <div class="content">
+            <div th:if="${#lists.isEmpty(itinerary.dayPlans)}" class="empty-state">
+                No days planned yet. Frame your itinerary by adding your first day!
+            </div>
+            
+            <th:block th:each="day : ${itinerary.dayPlans}">
+                <div class="day-section" th:id="${'day-' + day.dayNumber}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: var(--text);" th:text="${'Day ' + day.dayNumber}">Day X</h2>
+                        <button type="button" class="btn-primary" th:onclick="'toggleActivityForm(' + ${day.dayNumber} + ')'" style="padding: 8px 16px; font-size: 13px;">+ Add Activity</button>
+                    </div>
+                    
+                    <div class="timeline" th:if="${not #lists.isEmpty(day.activities)}">
+                        <div class="timeline-item" th:each="act : ${day.activities}">
+                            <div class="activity-header">
+                                <h3 class="activity-title" th:text="${act.name}">Activity Name</h3>
+                                <div class="badges">
+                                    <span class="badge-time" th:text="${act.startTime + ' (' + act.durationMins + 'm)'}">10:00</span>
+                                    <span class="badge-cost" th:text="${act.estimatedCost != null ? '$' + #numbers.formatDecimal(act.estimatedCost, 1, 'COMMA', 2, 'POINT') : '$0.00'}">$0.00</span>
+                                </div>
+                            </div>
+                            <p class="activity-notes" th:text="${act.notes}">Notes here</p>
+                            <div class="activity-footer">
+                                <form th:action="@{'/activities/' + ${act.id} + '/delete'}" method="post" style="margin:0;">
+                                    <input type="hidden" name="itineraryId" th:value="${itinerary.id}">
+                                    <button type="submit" class="btn-sm-danger" onclick="return confirm('Remove this activity from Day plan?');">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(day.activities)}" class="empty-state" style="margin-top: 20px; margin-bottom: 20px;">
+                        No activities scheduled.
+                    </div>
+
+                    <!-- Include the Add Activity inline Form fragment -->
+                    <div th:replace="~{activity-form :: activityForm(${itinerary.id}, ${day})}"></div>
+                </div>
+            </th:block>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        function toggleActivityForm(dayNumber) {
+            const form = document.getElementById('activity-form-' + dayNumber);
+            if (form) {
+                if (form.style.display === 'none') {
+                    form.style.display = 'block';
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    form.style.display = 'none';
+                }
+            }
+        }
+
+        // Auto sort activities by time on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const parseTime = (timeStr) => {
+                const match = timeStr.match(/(\d+):(\d+)\s*(am|pm)?/i);
+                if (!match) return 0;
+                let hours = parseInt(match[1]);
+                const mins = parseInt(match[2]);
+                const modifier = match[3] ? match[3].toLowerCase() : null;
+                if (modifier === 'pm' && hours < 12) hours += 12;
+                if (modifier === 'am' && hours === 12) hours = 0;
+                return hours * 60 + mins;
+            };
+
+            const timelines = document.querySelectorAll('.timeline');
+            timelines.forEach(timeline => {
+                const items = Array.from(timeline.querySelectorAll('.timeline-item'));
+                // Sort by time in the .badge-time element
+                items.sort((a, b) => {
+                    const timeA = parseTime(a.querySelector('.badge-time').innerText);
+                    const timeB = parseTime(b.querySelector('.badge-time').innerText);
+                    return timeA - timeB;
+                });
+                // Re-append in sorted order
+                items.forEach(item => timeline.appendChild(item));
+            });
+        });
+    </script>
+    <script th:replace="~{fragments/navbar :: sidebar-script}"></script>
+</body>
+</html>

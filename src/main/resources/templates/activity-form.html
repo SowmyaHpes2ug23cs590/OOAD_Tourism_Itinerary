@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="activityForm(itineraryId, day)" th:id="'activity-form-' + ${day.dayNumber}" class="add-activity-card" style="display: none;">
+    <form th:action="@{/activities/new}" method="post">
+        <input type="hidden" name="itineraryId" th:value="${itineraryId}">
+        <input type="hidden" name="dayPlanId" th:value="${day.id}">
+        <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+                <label>Activity Name</label>
+                <input type="text" name="name" required placeholder="E.g., Eiffel Tower Visit">
+            </div>
+            <div class="form-group">
+                <label>Start Time</label>
+                <input type="time" name="startTime" required>
+            </div>
+            <div class="form-group">
+                <label>Duration (mins)</label>
+                <input type="number" min="1" name="durationMins" required placeholder="120">
+            </div>
+            <div class="form-group">
+                <label>Est. Cost ($)</label>
+                <input type="number" step="0.01" min="0" name="estimatedCost" required placeholder="0.00">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <input type="text" name="notes" placeholder="Any booking info or location details...">
+        </div>
+        <div class="form-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="submit" class="btn-primary" style="width: auto;">Save Activity</button>
+            <button type="button" class="btn-secondary" th:onclick="'toggleActivityForm(' + ${day.dayNumber} + ')'" style="background: transparent; border: 1px solid var(--border); color: var(--text); padding: 10px 24px; border-radius: 6px; cursor: pointer; font-family: inherit;">Cancel</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>
