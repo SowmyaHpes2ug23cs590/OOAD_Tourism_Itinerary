@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hotel Bookings - Tourism Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+    <style>
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .btn-add { background: var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: 0.3s; display: inline-block; }
+        .btn-add:hover { background: #3b76b3; }
+        .table-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 16px 24px; background: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 500; font-size: 14px; border-bottom: 1px solid var(--border); }
+        td { padding: 16px 24px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background: #1e222e; }
+        .badge-confirmed { background: #1e3a2f; color: #4caf7d; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+        .badge-cancelled { background: #3a1e1e; color: #e57373; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+        .btn-cancel { background: transparent; color: #e57373; border: 1px solid #3a1e1e; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: 500; }
+        .btn-cancel:hover { background: #3a1e1e; }
+        .empty-state { text-align: center; padding: 60px; color: var(--text-muted); }
+        .hotel-ref { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 400; }
+        .modal { background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 400px; text-align: center; }
+        .modal h3 { margin-top: 0; }
+        .modal-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
+        .btn-danger { background: #e57373; color: #1a1d27; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; font-family: inherit; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h2 style="margin:0 0 4px;">Hotel Bookings</h2>
+                <a th:href="@{'/itineraries/' + ${itineraryId}}" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Back to Itinerary</a>
+            </div>
+            <a th:href="@{/bookings/add(itineraryId=${itineraryId})}" class="btn-add">+ Add Booking</a>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hotel</th>
+                        <th>City</th>
+                        <th>Dates</th>
+                        <th>Total Cost</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="b : ${bookings}">
+                        <td>
+                            <div style="font-weight:500;" th:text="${b.hotelName}">Hotel Name</div>
+                            <div class="hotel-ref" th:text="${'Ref: ' + (b.bookingRef != null && !b.bookingRef.isEmpty() ? b.bookingRef : 'N/A')}">Ref: N/A</div>
+                        </td>
+                        <td th:text="${b.city}">City</td>
+                        <td>
+                            <div th:text="${b.checkIn + ' to ' + b.checkOut}">Dates</div>
+                            <div th:if="${b.checkIn.isBefore(itinerary.startDate) or b.checkOut.isAfter(itinerary.endDate)}" 
+                                 style="color: #fca5a5; font-size: 11px; margin-top: 6px; display: inline-flex; align-items: center; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                ⚠️ Outside Schedule
+                            </div>
+                        </td>
+                        <td style="font-family:monospace;" th:text="${b.totalCost != null ? '$' + #numbers.formatDecimal(b.totalCost, 1, 'COMMA', 2, 'POINT') : 'N/A'}">$0.00</td>
+                        <td>
+                            <span th:classappend="${b.status.name() == 'CONFIRMED' ? 'badge-confirmed' : 'badge-cancelled'}"
+                                  th:text="${b.status}">STATUS</span>
+                        </td>
+                        <td>
+                            <button th:if="${b.status.name() == 'CONFIRMED'}" type="button" class="btn-cancel"
+                                    onclick="showCancelModal(this.getAttribute('data-id'), this.getAttribute('data-hotel'))"
+                                    th:attr="data-id=${b.id}, data-hotel=${b.hotelName}">Cancel</button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(bookings)}">
+                        <td colspan="6" class="empty-state">No hotel bookings found. Add one above!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Cancel Confirmation Modal -->
+    <div class="modal-overlay" id="cancelModal">
+        <div class="modal">
+            <h3>Cancel Booking</h3>
+            <p style="color:var(--text-muted);">Cancel booking for <strong id="modalHotelName" style="color:var(--text);"></strong>? The record will be kept with status CANCELLED.</p>
+            <form id="cancelForm" method="post" action="">
+                <input type="hidden" name="itineraryId" th:value="${itineraryId}">
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="hideCancelModal()">Keep Booking</button>
+                    <button type="submit" class="btn-danger">Yes, Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showCancelModal(id, hotelName) {
+            document.getElementById('modalHotelName').innerText = hotelName;
+            document.getElementById('cancelForm').action = '/bookings/cancel/' + id;
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+        function hideCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+    </script>
+    <script th:replace="~{fragments/navbar :: sidebar-script}"></script>
+</body>
+</html>
