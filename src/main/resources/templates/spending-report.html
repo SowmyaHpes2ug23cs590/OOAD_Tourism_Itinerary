@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spending Report - Tourism Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <th:block th:replace="~{fragments/navbar :: shared-styles}"></th:block>
+    <style>
+        --row-alt: #1e222e;
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .summary-card { background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .summary-label { font-size: 16px; color: var(--text-muted); margin-bottom: 8px; }
+        .summary-amount { font-size: 48px; font-weight: 700; color: var(--primary); }
+        .table-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 16px 24px; background: rgba(0,0,0,0.2); color: var(--text-muted); font-weight: 500; font-size: 14px; border-bottom: 1px solid var(--border); }
+        td { padding: 16px 24px; border-bottom: 1px solid var(--border); color: var(--text); }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) { background-color: #1e222e; }
+        .cost { font-family: monospace; font-size: 16px; }
+        .view-link { color: var(--primary); font-size: 13px; font-weight: 500; text-decoration: none; }
+        .view-link:hover { text-decoration: underline; }
+        .empty-state { text-align: center; padding: 50px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+
+    <div class="container">
+        <div class="summary-card">
+            <div class="summary-label">Total Estimated Spend</div>
+            <div class="summary-amount" th:text="${'$' + #numbers.formatDecimal(totalSpend, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Itinerary</th>
+                        <th>Estimated Budget</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${spendingItems}">
+                        <td th:text="${item.itineraryName}">Trip Name</td>
+                        <td class="cost" th:text="${'$' + #numbers.formatDecimal(item.estimatedCost, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                        <td><a th:href="@{'/itineraries/' + ${item.itineraryId}}" class="view-link">View →</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(spendingItems)}">
+                        <td colspan="3" class="empty-state">No itineraries found. <a href="/itineraries/new" style="color:var(--primary);">Create one!</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script th:replace="~{fragments/navbar :: sidebar-script}"></script>
+</body>
+</html>
